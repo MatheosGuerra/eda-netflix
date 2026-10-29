@@ -106,7 +106,7 @@ VARS_QUANT = ["release_year", "year_added", "duration_num"]
 LABELS = {
     "release_year": "Ano de Lançamento",
     "year_added":   "Ano de Adição",
-    "duration_num": "Duração em minutos (filmes)",
+    "duration_num": "Duração em min. (filmes)",
 }
 
 # Mapa tipo PT → valor no CSV
