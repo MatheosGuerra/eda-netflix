@@ -234,8 +234,8 @@ with tab2:
     k2.metric("Filmes", f"{n_movies:,}", f"{pct_movies:.1f}%")
     k3.metric("Séries (TV Show)", f"{n_shows:,}", f"{pct_shows:.1f}%")
     k4.metric("Duração Média (filmes)", f"{avg_duration:.0f} min")
-    top_country_display = top_country[:12] + "…" if len(top_country) > 12 else top_country
-    k5.metric("País mais prolífico", top_country_display, help=f"País completo: {top_country}")
+    top_country_short = top_country.split()[0] if len(top_country) > 10 else top_country
+    k5.metric("País mais prolífico", top_country_short, help=f"País completo: {top_country}")
 
     st.divider()
 
@@ -252,6 +252,10 @@ with tab2:
             .reset_index()
         )
         genre_counts.columns = ["Gênero", "Títulos"]
+        genre_counts["Gênero_completo"] = genre_counts["Gênero"]
+        genre_counts["Gênero"] = genre_counts["Gênero"].apply(
+            lambda x: x[:20] + "…" if len(x) > 20 else x
+        )
 
         chart_genre = (
             alt.Chart(genre_counts)
@@ -260,7 +264,10 @@ with tab2:
                 x=alt.X("Títulos:Q", title="Quantidade"),
                 y=alt.Y("Gênero:N", sort="-x", title=""),
                 color=alt.value(COLOR_MOVIE),
-                tooltip=["Gênero", "Títulos"],
+                tooltip=[
+                    alt.Tooltip("Gênero_completo:N", title="Gênero"),
+                    alt.Tooltip("Títulos:Q"),
+                ],
             )
             .properties(height=320)
         )
