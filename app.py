@@ -42,10 +42,13 @@ def load_data():
     df = df.dropna(subset=["rating", "date_added"]).reset_index(drop=True)
     df["director"] = df["director"].fillna("Não informado")
     df["cast"] = df["cast"].fillna("Não informado")
-    df["country"] = df["country"].fillna("Unknown")
+    df["country"] = df["country"].fillna("Desconhecido")
 
     df["country_first"] = df["country"].str.split(",").str[0].str.strip()
     df["genre_first"] = df["listed_in"].str.split(",").str[0].str.strip()
+
+    # Coluna de tipo em português para exibição
+    df["tipo_pt"] = df["type"].map({"Movie": "Filme", "TV Show": "Série"})
 
     return df
 
@@ -59,8 +62,11 @@ LABELS = {
     "duration_num": "Duração em minutos (filmes)",
 }
 
-COLOR_MOVIE = "#E50914"
-COLOR_TV    = "#831010"
+# Mapa tipo PT → valor no CSV
+TIPO_MAP = {"Todos": None, "Filme": "Movie", "Série": "TV Show"}
+
+COLOR_FILME  = "#E50914"
+COLOR_SERIE  = "#831010"
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 
@@ -69,15 +75,16 @@ with st.sidebar:
 
     tipo_sel = st.selectbox(
         "Tipo de conteúdo",
-        options=["Todos", "Movie", "TV Show"],
+        options=["Todos", "Filme", "Série"],
+        help="Filtra todos os gráficos e métricas pelo tipo de conteúdo.",
     )
 
     vars_corr = st.multiselect(
-        "Variáveis para a correlação",
+        "Variáveis para correlação",
         options=VARS_QUANT,
         default=["release_year", "year_added"],
         format_func=lambda v: LABELS[v],
-        help="Selecione ao menos 2 variáveis para gerar o heatmap.",
+        help="Selecione ao menos 2 variáveis para gerar o mapa de calor.",
     )
 
     ano_min = int(df["release_year"].min())
@@ -87,20 +94,28 @@ with st.sidebar:
         min_value=ano_min,
         max_value=ano_max,
         value=(ano_min, ano_max),
-        help="Mova os extremos para excluir outliers e ver como isso afeta a correlação.",
+        help="Arraste as extremidades para excluir outliers.",
     )
 
 # ── Filtros aplicados ─────────────────────────────────────────────────────────
 
 df_f = df.copy()
-if tipo_sel != "Todos":
-    df_f = df_f[df_f["type"] == tipo_sel]
+tipo_csv = TIPO_MAP[tipo_sel]
+if tipo_csv:
+    df_f = df_f[df_f["type"] == tipo_csv]
 df_f = df_f[df_f["release_year"].between(intervalo_ano[0], intervalo_ano[1])]
+
+caption_base = (
+    f"Dataset: Netflix Movies and TV Shows  ·  "
+    f"**{len(df_f):,}** títulos após filtros  ·  "
+    f"Tipo: {tipo_sel}  ·  "
+    f"Ano: {intervalo_ano[0]}–{intervalo_ano[1]}"
+)
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
 
 tab1, tab2 = st.tabs(
-    ["Dashboard 1 — Correlação e Distribuição", "Dashboard 2 — KPIs"]
+    ["📊 Correlação e Distribuição", "📈 KPIs do Catálogo"]
 )
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -108,22 +123,17 @@ tab1, tab2 = st.tabs(
 # ═══════════════════════════════════════════════════════════════════════════════
 
 with tab1:
-    st.title("Dashboard 1 — Correlação e Distribuição")
-    st.caption(
-        f"Dataset: Netflix Movies and TV Shows  ·  "
-        f"**{len(df_f):,}** títulos após filtros  ·  "
-        f"Tipo: {tipo_sel}  ·  "
-        f"Ano: {intervalo_ano[0]}–{intervalo_ano[1]}"
-    )
+    st.title("Correlação e Distribuição")
+    st.caption(caption_base)
 
     col_corr, col_dist = st.columns(2)
 
-    # ── Heatmap de correlação ─────────────────────────────────────────────────
+    # ── Mapa de calor ─────────────────────────────────────────────────────────
     with col_corr:
-        st.subheader("Correlação")
+        st.subheader("Mapa de Calor")
 
         if len(vars_corr) < 2:
-            st.warning("Selecione ao menos 2 variáveis na sidebar para gerar o heatmap.")
+            st.warning("Selecione ao menos 2 variáveis na barra lateral para gerar o mapa de calor.")
         else:
             colunas_validas = [v for v in vars_corr if v in df_f.columns]
             corr_data = df_f[colunas_validas].dropna()
@@ -150,7 +160,7 @@ with tab1:
                 st.pyplot(fig, use_container_width=True)
                 plt.close(fig)
 
-    # ── Histograma de distribuição ────────────────────────────────────────────
+    # ── Histograma ────────────────────────────────────────────────────────────
     with col_dist:
         st.subheader("Distribuição")
 
@@ -170,21 +180,24 @@ with tab1:
                 fig2, ax2 = plt.subplots(figsize=(5, 4))
 
                 if tipo_sel == "Todos":
-                    for tipo, cor in [("Movie", COLOR_MOVIE), ("TV Show", COLOR_TV)]:
-                        subset = df_f[df_f["type"] == tipo][var_dist].dropna()
+                    for tipo_raw, label_pt, cor in [
+                        ("Movie",   "Filme", COLOR_FILME),
+                        ("TV Show", "Série", COLOR_SERIE),
+                    ]:
+                        subset = df_f[df_f["type"] == tipo_raw][var_dist].dropna()
                         if not subset.empty:
                             sns.histplot(
                                 subset,
                                 bins=30,
                                 color=cor,
-                                label=tipo,
+                                label=label_pt,
                                 alpha=0.7,
                                 ax=ax2,
                                 kde=True,
                             )
                     ax2.legend()
                 else:
-                    cor = COLOR_MOVIE if tipo_sel == "Movie" else COLOR_TV
+                    cor = COLOR_FILME if tipo_sel == "Filme" else COLOR_SERIE
                     sns.histplot(serie, bins=30, color=cor, alpha=0.85, ax=ax2, kde=True)
 
                 ax2.set_xlabel(LABELS.get(var_dist, var_dist), fontsize=9)
@@ -204,42 +217,38 @@ with tab1:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 with tab2:
-    st.title("Dashboard 2 — KPIs do Catálogo Netflix")
-    st.caption(
-        f"Dataset: Netflix Movies and TV Shows  ·  "
-        f"**{len(df_f):,}** títulos após filtros  ·  "
-        f"Tipo: {tipo_sel}  ·  "
-        f"Ano: {intervalo_ano[0]}–{intervalo_ano[1]}"
-    )
+    st.title("KPIs do Catálogo Netflix")
+    st.caption(caption_base)
 
-    # ── Cartões de KPI ────────────────────────────────────────────────────────
-    total = len(df_f)
-    n_movies = int((df_f["type"] == "Movie").sum())
-    n_shows  = int((df_f["type"] == "TV Show").sum())
-    pct_movies = n_movies / total * 100 if total else 0
-    pct_shows  = n_shows  / total * 100 if total else 0
+    # ── Métricas ──────────────────────────────────────────────────────────────
+    total    = len(df_f)
+    n_filmes = int((df_f["type"] == "Movie").sum())
+    n_series = int((df_f["type"] == "TV Show").sum())
+    pct_filmes = n_filmes / total * 100 if total else 0
+    pct_series = n_series / total * 100 if total else 0
 
-    movies_only = df_f[df_f["type"] == "Movie"]["duration_num"].dropna()
-    avg_duration = movies_only.mean() if not movies_only.empty else 0
+    filmes_only  = df_f[df_f["type"] == "Movie"]["duration_num"].dropna()
+    avg_duration = filmes_only.mean() if not filmes_only.empty else 0
 
     top_country = (
-        df_f[df_f["country_first"] != "Unknown"]["country_first"]
+        df_f[df_f["country_first"] != "Desconhecido"]["country_first"]
         .value_counts()
         .idxmax()
         if total > 0 else "—"
     )
+    top_country_short = top_country.split()[0] if len(top_country) > 10 else top_country
 
     k1, k2, k3, k4, k5 = st.columns(5)
-    k1.metric("Total de Títulos", f"{total:,}")
-    k2.metric("Filmes", f"{n_movies:,}", f"{pct_movies:.1f}%")
-    k3.metric("Séries (TV Show)", f"{n_shows:,}", f"{pct_shows:.1f}%")
+    k1.metric("Total de Títulos",       f"{total:,}")
+    k2.metric("Filmes",                 f"{n_filmes:,}",  f"{pct_filmes:.1f}%")
+    k3.metric("Séries",                 f"{n_series:,}",  f"{pct_series:.1f}%")
     k4.metric("Duração Média (filmes)", f"{avg_duration:.0f} min")
-    top_country_short = top_country.split()[0] if len(top_country) > 10 else top_country
-    k5.metric("País mais prolífico", top_country_short, help=f"País completo: {top_country}")
+    k5.metric("País mais prolífico",    top_country_short,
+              help=f"País completo: {top_country}")
 
     st.divider()
 
-    # ── Gráficos interativos (Altair) ─────────────────────────────────────────
+    # ── Gráficos Altair ───────────────────────────────────────────────────────
     col_bar1, col_bar2 = st.columns(2)
 
     with col_bar1:
@@ -252,7 +261,7 @@ with tab2:
             .reset_index()
         )
         genre_counts.columns = ["Gênero", "Títulos"]
-        genre_counts["Gênero_completo"] = genre_counts["Gênero"]
+
         chart_genre = (
             alt.Chart(genre_counts)
             .mark_bar()
@@ -260,7 +269,7 @@ with tab2:
                 x=alt.X("Títulos:Q", title="Quantidade"),
                 y=alt.Y("Gênero:N", sort="-x", title="",
                         axis=alt.Axis(labelLimit=200)),
-                color=alt.value(COLOR_MOVIE),
+                color=alt.value(COLOR_FILME),
                 tooltip=["Gênero", "Títulos"],
             )
             .properties(height=320)
@@ -272,7 +281,7 @@ with tab2:
 
         year_df = (
             df_f.dropna(subset=["year_added"])
-            .groupby(["year_added", "type"])
+            .groupby(["year_added", "tipo_pt"])
             .size()
             .reset_index(name="Títulos")
         )
@@ -285,14 +294,18 @@ with tab2:
                 x=alt.X("year_added:O", title="Ano de Adição"),
                 y=alt.Y("Títulos:Q"),
                 color=alt.Color(
-                    "type:N",
+                    "tipo_pt:N",
                     scale=alt.Scale(
-                        domain=["Movie", "TV Show"],
-                        range=[COLOR_MOVIE, COLOR_TV],
+                        domain=["Filme", "Série"],
+                        range=[COLOR_FILME, COLOR_SERIE],
                     ),
                     legend=alt.Legend(title="Tipo"),
                 ),
-                tooltip=["year_added:O", "type:N", "Títulos:Q"],
+                tooltip=[
+                    alt.Tooltip("year_added:O",  title="Ano"),
+                    alt.Tooltip("tipo_pt:N",      title="Tipo"),
+                    alt.Tooltip("Títulos:Q",      title="Títulos"),
+                ],
             )
             .properties(height=320)
         )
@@ -300,7 +313,7 @@ with tab2:
 
     st.divider()
 
-    # ── Distribuição de classificações indicativas ────────────────────────────
+    # ── Classificação indicativa ──────────────────────────────────────────────
     st.subheader("Distribuição por Classificação Indicativa")
 
     rating_df = (
@@ -318,8 +331,8 @@ with tab2:
             y=alt.Y("Títulos:Q", title="Quantidade"),
             color=alt.condition(
                 alt.datum["Classificação"] == "TV-MA",
-                alt.value(COLOR_MOVIE),
-                alt.value(COLOR_TV),
+                alt.value(COLOR_FILME),
+                alt.value(COLOR_SERIE),
             ),
             tooltip=["Classificação", "Títulos"],
         )
@@ -327,6 +340,6 @@ with tab2:
     )
     st.altair_chart(chart_rating, use_container_width=True)
     st.caption(
-        "TV-MA = adulto | TV-14 = maiores de 14 | TV-PG / PG-13 = supervisão recomendada | "
+        "TV-MA = adulto | TV-14 = maiores de 14 anos | TV-PG / PG-13 = supervisão recomendada | "
         "G / TV-G = livre | NR = não classificado"
     )
