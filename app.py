@@ -253,21 +253,15 @@ with tab2:
         )
         genre_counts.columns = ["Gênero", "Títulos"]
         genre_counts["Gênero_completo"] = genre_counts["Gênero"]
-        genre_counts["Gênero"] = genre_counts["Gênero"].apply(
-            lambda x: x[:20] + "…" if len(x) > 20 else x
-        )
-
         chart_genre = (
             alt.Chart(genre_counts)
             .mark_bar()
             .encode(
                 x=alt.X("Títulos:Q", title="Quantidade"),
-                y=alt.Y("Gênero:N", sort="-x", title=""),
+                y=alt.Y("Gênero:N", sort="-x", title="",
+                        axis=alt.Axis(labelLimit=200)),
                 color=alt.value(COLOR_MOVIE),
-                tooltip=[
-                    alt.Tooltip("Gênero_completo:N", title="Gênero"),
-                    alt.Tooltip("Títulos:Q"),
-                ],
+                tooltip=["Gênero", "Títulos"],
             )
             .properties(height=320)
         )
