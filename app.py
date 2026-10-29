@@ -31,7 +31,7 @@ def load_data():
     df = pd.read_csv(csv_path)
 
     df["duration_num"] = df["duration"].str.extract(r"(\d+)").astype(float)
-    df["duration_unit"] = df["duration"].str.extract(r"([A-Za-z\s]+)").str.strip()
+    df["duration_unit"] = df["duration"].str.extract(r"([A-Za-z\s]+)")[0].str.strip()
 
     df["date_added_parsed"] = pd.to_datetime(
         df["date_added"].str.strip(), format="%B %d, %Y", errors="coerce"
