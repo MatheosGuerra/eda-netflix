@@ -4,9 +4,7 @@ Aplicação interativa com dois dashboards construída sobre o dataset **Netflix
 
 ## Link do App
 
-> **[Adicionar link após o deploy no Streamlit Community Cloud]**
->
-> Exemplo: `https://seu-subdominio.streamlit.app`
+**https://eda-netflix.streamlit.app/**
 
 ## Descrição
 
