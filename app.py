@@ -173,7 +173,7 @@ with tab1:
     st.title("Correlação e Distribuição")
     st.caption(caption_base)
 
-    col_corr, col_dist = st.columns(2)
+    col_dist, col_corr = st.columns(2)
 
     # ── Mapa de calor ─────────────────────────────────────────────────────────
     with col_corr:
