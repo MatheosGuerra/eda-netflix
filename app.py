@@ -230,12 +230,8 @@ with tab2:
     filmes_only  = df_f[df_f["type"] == "Movie"]["duration_num"].dropna()
     avg_duration = filmes_only.mean() if not filmes_only.empty else 0
 
-    top_country = (
-        df_f[df_f["country_first"] != "Desconhecido"]["country_first"]
-        .value_counts()
-        .idxmax()
-        if total > 0 else "—"
-    )
+    _country_counts = df_f[df_f["country_first"] != "Desconhecido"]["country_first"].value_counts()
+    top_country = _country_counts.idxmax() if not _country_counts.empty else "—"
     top_country_short = top_country.split()[0] if len(top_country) > 10 else top_country
 
     k1, k2, k3, k4, k5 = st.columns(5)
