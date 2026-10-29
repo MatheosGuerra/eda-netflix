@@ -47,6 +47,53 @@ def load_data():
     df["country_first"] = df["country"].str.split(",").str[0].str.strip()
     df["genre_first"] = df["listed_in"].str.split(",").str[0].str.strip()
 
+    GENEROS_PT = {
+        "Action & Adventure": "Ação e Aventura",
+        "Anime Features": "Anime — Filmes",
+        "Anime Series": "Anime — Séries",
+        "British TV Shows": "Séries Britânicas",
+        "Children & Family Movies": "Filmes Infantis e Família",
+        "Classic & Cult TV": "TV Clássica e Cult",
+        "Classic Movies": "Filmes Clássicos",
+        "Comedies": "Comédias",
+        "Crime TV Shows": "Séries de Crime",
+        "Cult Movies": "Filmes Cult",
+        "Documentaries": "Documentários",
+        "Docuseries": "Documentários em Série",
+        "Dramas": "Dramas",
+        "Faith & Spirituality": "Fé e Espiritualidade",
+        "Horror Movies": "Filmes de Terror",
+        "Independent Movies": "Filmes Independentes",
+        "International Movies": "Filmes Internacionais",
+        "International TV Shows": "Séries Internacionais",
+        "Kids' TV": "TV Infantil",
+        "Korean TV Shows": "Séries Coreanas",
+        "LGBTQ Movies": "Filmes LGBTQ+",
+        "Movies": "Filmes",
+        "Music & Musicals": "Música e Musicais",
+        "Nature & Ecology": "Natureza e Ecologia",
+        "Reality TV": "Reality Shows",
+        "Romantic Movies": "Filmes Românticos",
+        "Romantic TV Shows": "Séries Românticas",
+        "Sci-Fi & Fantasy": "Ficção Científica e Fantasia",
+        "Science & Nature TV": "Ciência e Natureza",
+        "Spanish-Language TV Shows": "Séries em Espanhol",
+        "Sports Movies": "Filmes de Esporte",
+        "Stand-Up Comedy": "Stand-Up Comedy",
+        "Stand-Up Comedy & Talk Shows": "Stand-Up e Talk Shows",
+        "Talk Show TV Shows": "Talk Shows",
+        "Teen TV Shows": "Séries para Adolescentes",
+        "Thrillers": "Thrillers",
+        "TV Action & Adventure": "Séries de Ação e Aventura",
+        "TV Comedies": "Comédias de TV",
+        "TV Dramas": "Dramas de TV",
+        "TV Horror": "Terror de TV",
+        "TV Mysteries": "Mistérios de TV",
+        "TV Sci-Fi & Fantasy": "Ficção Científica de TV",
+        "TV Thrillers": "Thrillers de TV",
+    }
+    df["genre_first"] = df["genre_first"].replace(GENEROS_PT)
+
     # Coluna de tipo em português para exibição
     df["tipo_pt"] = df["type"].map({"Movie": "Filme", "TV Show": "Série"})
 
