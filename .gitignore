@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Pastas de entrega/aula anteriores (não fazem parte do projeto final)
+entrega_aula21/
+atividade_22_10_2026/
+
+# Notebook não relacionado ao projeto
+webscraping_hockey.ipynb
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
