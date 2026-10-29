@@ -234,7 +234,8 @@ with tab2:
     k2.metric("Filmes", f"{n_movies:,}", f"{pct_movies:.1f}%")
     k3.metric("Séries (TV Show)", f"{n_shows:,}", f"{pct_shows:.1f}%")
     k4.metric("Duração Média (filmes)", f"{avg_duration:.0f} min")
-    k5.metric("País mais prolífico", top_country)
+    top_country_display = top_country[:12] + "…" if len(top_country) > 12 else top_country
+    k5.metric("País mais prolífico", top_country_display, help=f"País completo: {top_country}")
 
     st.divider()
 
